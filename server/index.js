@@ -5,11 +5,16 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
 }
 
 const express = require("express");
+const cors = require("cors");
 const connectDB = require("./DB/connectDB");
 const notFoundMiddleware = require("./middlewares/notFound");
 const errHandlerMiddleware = require("./middlewares/errHandler");
-const FormRouter = require("./routers/FormRouter");
-const cors = require("cors");
+const UserRouter = require("./routers/UserRouter");
+const JobRouter = require("./routers/JobRouter");
+const cookieParser = require("cookie-parser");
+const morgan = require("morgan");
+
+// initializations
 const app = express();
 
 // middlewares
@@ -19,19 +24,21 @@ app.use(
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   })
 );
-
 app.use(express.json());
+app.use(cookieParser());
+app.use(morgan("dev"));
 
 // routes
-app.use("/api/v1", FormRouter);
+app.use("/api/v1", UserRouter);
+app.use("/api/v1", JobRouter);
 
 app.get("/", (req, res) => {
   res.send("Welcome to my app");
 });
 
 // custom-middlewares
-app.use(notFoundMiddleware);
 app.use(errHandlerMiddleware);
+app.use(notFoundMiddleware);
 
 // app listening
 const PORT = process.env.PORT || 4000;

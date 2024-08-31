@@ -13,8 +13,15 @@ const UserRouter = require("./routers/UserRouter");
 const JobRouter = require("./routers/JobRouter");
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
+const cloudinary = require("cloudinary").v2;
 
 // initializations
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 const app = express();
 
 // middlewares
@@ -22,6 +29,7 @@ app.use(
   cors({
     origin: ["http://localhost:5173"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    credentials: true,
   })
 );
 app.use(express.json());

@@ -3,6 +3,7 @@ const customAPIError = require("../errors/customAPIError");
 const User = require("../models/User");
 const Job = require("../models/Job");
 const { StatusCodes } = require("http-status-codes");
+const cloudinary = require("cloudinary").v2;
 
 const SignUp = async (req, res) => {
   const { username, email, password } = req.body;
@@ -98,22 +99,65 @@ const LoadUser = async (req, res, next) => {
 };
 
 const uploadResume = async (req, res) => {
+  const resume_pdf = req.file;
+
+  if (!resume_pdf) {
+    throw new customAPIError(
+      "Please provide resume !!",
+      StatusCodes.BAD_REQUEST
+    );
+  }
+
+  console.log({ resume_pdf });
+
   const user = await User.findById(req.user.id);
 
-  // get resume data
+  user.resumes.push({
+    resume_title: resume_pdf.originalname.slice(0, -4),
+    resume_public_id: resume_pdf.filename,
+    resume_url: resume_pdf.path,
+  });
 
-  // update user.
+  await user.save();
+
+  res.json({ success: true, msg: "Resume Uploaded Successfully !!", user });
 };
 
 const removeResume = async (req, res) => {
   const { resume_public_id } = req.body;
+
+  if (!resume_public_id) {
+    throw new customAPIError(
+      "Please provide Resume Id !!",
+      StatusCodes.BAD_REQUEST
+    );
+  }
+
   const user = await User.findById(req.user.id);
 
   // find resume
+  let index = user.resumes.findIndex(
+    (item) => item.resume_public_id === resume_public_id
+  );
+  console.log("got index : ", index);
 
-  // remove it
+  if (index === -1) {
+    throw new customAPIError("Resume not found !!", StatusCodes.NOT_FOUND);
+  }
 
-  // update user.
+  // remove from cloud
+  await cloudinary.uploader
+    .destroy(user.resumes[index].resume_public_id)
+    .then(() => console.log("resume deleted."))
+    .catch((err) => console.log("Error deleting resume from Cloudinary", err));
+
+  user.resumes.splice(index, 1);
+
+  await user.save();
+
+  res
+    .status(StatusCodes.OK)
+    .json({ success: true, msg: "Resume deleted successfully.", user });
 };
 
 const ApplyForJob = async (req, res, next) => {
@@ -121,6 +165,15 @@ const ApplyForJob = async (req, res, next) => {
 
   const user = await User.findById(req.user.id);
 
+  // cannot apply to own created jobs
+  if (user.jobs_created.includes(job_id)) {
+    throw new customAPIError(
+      "You cannot apply to your created job !!",
+      StatusCodes.BAD_REQUEST
+    );
+  }
+
+  // cannot apply for already applied jobs
   if (user.jobs_applied.includes(job_id)) {
     throw new customAPIError(
       "Already applied for this job !!",
@@ -132,15 +185,6 @@ const ApplyForJob = async (req, res, next) => {
 
   if (!job) {
     throw new customAPIError("Job not found !!", StatusCodes.BAD_REQUEST);
-  }
-
-  if (resume_public_id) {
-    if (!user.resumes.includes(resume_public_id)) {
-      throw new customAPIError(
-        "Please provide a valid resume !!",
-        StatusCodes.BAD_REQUEST
-      );
-    }
   }
 
   const index = user.resumes.findIndex(
@@ -169,4 +213,12 @@ const ApplyForJob = async (req, res, next) => {
   });
 };
 
-module.exports = { SignUp, LogIn, LogOut, ApplyForJob, LoadUser };
+module.exports = {
+  SignUp,
+  LogIn,
+  LogOut,
+  ApplyForJob,
+  LoadUser,
+  uploadResume,
+  removeResume,
+};

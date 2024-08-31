@@ -26,8 +26,9 @@ const UserSchema = new mongoose.Schema(
 
     resumes: [
       {
-        resume_public_id: { type: string, required: true },
-        resume_url: { type: string, required: true },
+        resume_title: { type: String, required: true },
+        resume_public_id: { type: String, required: true },
+        resume_url: { type: String, required: true },
       },
     ],
 

@@ -33,7 +33,7 @@ const JobSchema = new mongoose.Schema(
 
     CTC: {
       type: Number,
-      required: [true, "Please Enter CTC"],
+      default: 0,
     },
 
     exp_needed: {
@@ -51,6 +51,13 @@ const JobSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please provide job status"],
       enum: ["hiring", "closed"],
+      default: "hiring",
+    },
+
+    job_poster: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+      required: true,
     },
 
     applications: [

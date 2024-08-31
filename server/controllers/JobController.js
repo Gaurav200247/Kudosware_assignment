@@ -50,7 +50,7 @@ const GetAllJobs = async (req, res, next) => {
   }
 
   if (CTC) {
-    CTC = Number(CTC);
+    let CTCValue = Number(CTC);
     if (isNaN(CTCValue) || CTCValue < 0) {
       throw new customAPIError(
         "Please provide valid CTC",
@@ -74,7 +74,7 @@ const GetAllJobs = async (req, res, next) => {
   const skip = (page - 1) * limit;
 
   const jobs = await Job.find(queryObj).skip(skip).limit(limit);
-  let allJobs = await Job.find(queryObj);
+  let allJobs = await Job.find();
 
   res.status(StatusCodes.OK).json({
     success: true,
@@ -112,9 +112,16 @@ const PostJob = async (req, res, next) => {
     );
   }
 
-  if (exp_needed.min < 0 || exp_needed.max < 0) {
+  if (exp_needed?.min > exp_needed?.max) {
     throw new customAPIError(
-      "please provide experience figure for the job",
+      "please provide valid min experience figure for the job",
+      StatusCodes.BAD_REQUEST
+    );
+  }
+
+  if (exp_needed?.min < 0 || exp_needed?.max < 0) {
+    throw new customAPIError(
+      "please provide valid experience figures for the job",
       StatusCodes.BAD_REQUEST
     );
   }
@@ -126,6 +133,7 @@ const PostJob = async (req, res, next) => {
     CTC,
     exp_needed,
     skills_needed,
+    job_poster: req.user.id,
   });
 
   const user = await User.findById(req.user.id);
@@ -135,21 +143,6 @@ const PostJob = async (req, res, next) => {
   await user.save();
 
   res.json({ success: true, msg: "job created successfully !!", job });
-};
-
-const CloseJob = async (req, res, next) => {
-  let job = await Job.findById(req.params.id);
-
-  if (!job) {
-    throw new customAPIError("job not Found", StatusCodes.NOT_FOUND);
-  }
-
-  // if job has some applicants then send mail to each user applied
-  let updatedJob = await Job.findByIdAndUpdate(req.params.id, {
-    job_status: "closed",
-  });
-
-  res.json({ success: true, msg: "job is now closed !!", job: updatedJob });
 };
 
 const UpdateJob = async (req, res, next) => {
@@ -168,18 +161,32 @@ const UpdateJob = async (req, res, next) => {
     );
   }
 
-  if (!jobData?.exp_needed?.max) {
-    throw new customAPIError(
-      "please provide max experience needed for the job",
-      StatusCodes.BAD_REQUEST
-    );
-  }
+  if (jobData?.exp_needed) {
+    let min_exp, max_exp;
 
-  if (jobData?.exp_needed.min < 0 || jobData?.exp_needed.max < 0) {
-    throw new customAPIError(
-      "please provide experience figure for the job",
-      StatusCodes.BAD_REQUEST
-    );
+    if (jobData?.exp_needed?.min) {
+      min_exp = jobData.exp_needed.min;
+    } else {
+      min_exp = job.exp_needed.min;
+    }
+
+    if (jobData?.exp_needed?.max) {
+      max_exp = jobData.exp_needed.max;
+    } else {
+      max_exp = job.exp_needed.max;
+    }
+
+    if (min_exp > max_exp || min_exp < 0 || max_exp < 0) {
+      throw new customAPIError(
+        `please provide valid experience figure for the job (min exp : ${min_exp}), (max exp : ${max_exp}) `,
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    jobData.exp_needed = {
+      min: min_exp,
+      max: max_exp,
+    };
   }
 
   // if job has some applicants => then send mail those applicants => to check job updation
@@ -241,4 +248,9 @@ const UpdateJob = async (req, res, next) => {
   });
 };
 
-module.exports = { GetAllJobs, GetSingleJob, PostJob, CloseJob, UpdateJob };
+module.exports = {
+  GetAllJobs,
+  GetSingleJob,
+  PostJob,
+  UpdateJob,
+};

@@ -84,6 +84,8 @@ const LogOut = async (req, res, next) => {
       expires: new Date(0),
       httpOnly: true,
       secure: true,
+      sameSite: "none",
+      path: "/",
     })
     .json({ success: true, msg: "Logged Out Successfully !!" });
 };

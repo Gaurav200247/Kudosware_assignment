@@ -15,7 +15,7 @@ const ApplyJob = () => {
   const { job_id } = useParams();
   const navigate = useNavigate();
 
-  const { isError, data: userData } = useLoadUserQuery();
+  const { isError, data: userData, refetch } = useLoadUserQuery();
   const { data: jobData } = useGetSinglejobQuery({
     job_id,
   });
@@ -40,9 +40,7 @@ const ApplyJob = () => {
     if (result?.data?.success) {
       toast(result.data.msg || "resume deleted succcessfully !!");
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000);
+      refetch();
     }
   };
 
@@ -158,6 +156,7 @@ const ApplyJob = () => {
               ResumeFile={ResumeFile}
               setResumeFile={setResumeFile}
               ResumeUploadRef={ResumeUploadRef}
+              refetch={refetch}
             />
           </div>
         ) : (

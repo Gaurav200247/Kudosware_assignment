@@ -8,12 +8,12 @@ import { GrCheckmark } from "react-icons/gr";
 import { AiFillDelete } from "react-icons/ai";
 import { useUploadResumeMutation } from "../Slices/UserSlice";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 
 const UploadAndPreviewPdf = ({
   ResumeFile,
   setResumeFile,
   ResumeUploadRef,
+  refetch,
 }) => {
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -24,8 +24,6 @@ const UploadAndPreviewPdf = ({
   const [CurrentPage, setCurrentPage] = useState(1);
 
   const [uploadPDF] = useUploadResumeMutation();
-
-  const navigate = useNavigate();
 
   const HandleFileChange = (e) => {
     setResumeFile(e.target.files[0]);
@@ -46,9 +44,8 @@ const UploadAndPreviewPdf = ({
       if (result?.data?.success) {
         toast(result?.data?.msg || "The resume uploaded successfully.");
 
-        setTimeout(() => {
-          window.location.reload();
-        }, 3000);
+        refetch();
+        setResumeFile(null);
       }
     } else {
       toast("Please select resume to upload !!");

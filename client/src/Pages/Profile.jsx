@@ -7,7 +7,7 @@ import ResumeContainer from "../Components/ResumeContainer";
 import ProfileJobsCreated from "../Components/ProfileJobsCreated";
 
 const Profile = () => {
-  const { isError, data } = useLoadUserQuery();
+  const { isError, data, refetch } = useLoadUserQuery();
 
   if (data?.success && data?.user) {
     const { email, jobs_applied, jobs_created, username, createdAt, resumes } =
@@ -81,7 +81,7 @@ const Profile = () => {
         </div>
 
         {/* upload resume */}
-        <ResumeContainer resumes={resumes} />
+        <ResumeContainer resumes={resumes} refetch={refetch} />
       </div>
     );
   } else if (isError) {

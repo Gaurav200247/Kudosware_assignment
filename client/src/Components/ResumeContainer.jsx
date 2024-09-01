@@ -5,7 +5,7 @@ import { AiFillDelete } from "react-icons/ai";
 import { toast } from "react-toastify";
 import { useRemoveResumeMutation } from "../Slices/UserSlice";
 
-const ResumeContainer = ({ resumes }) => {
+const ResumeContainer = ({ resumes, refetch }) => {
   const ResumeUploadRef = useRef(null);
   const [ResumeFile, setResumeFile] = useState(null);
 
@@ -22,9 +22,7 @@ const ResumeContainer = ({ resumes }) => {
     if (result?.data?.success) {
       toast(result.data.msg || "resume deleted succcessfully !!");
 
-      setTimeout(() => {
-        window.location.reload();
-      }, 3000);
+      refetch();
     }
   };
 
@@ -35,6 +33,7 @@ const ResumeContainer = ({ resumes }) => {
         ResumeFile={ResumeFile}
         setResumeFile={setResumeFile}
         ResumeUploadRef={ResumeUploadRef}
+        refetch={refetch}
       />
 
       {/* all resumes list */}
